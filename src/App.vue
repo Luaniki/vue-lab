@@ -1,44 +1,121 @@
-<script setup lang="ts">
-import { RouterLink, RouterView } from 'vue-router'
-import HelloWorld from './components/HelloWorld.vue'
-</script>
-
 <template>
-  <header>
+  <div id="app" class="small-container">
+    <img id="image" src="./assets/Logo Vue.png" alt="VueJS" />
+    <h1>Employee Details</h1>
+    <employee-form  @add:employee="addEmployee" />
 
-
-    <div class="wrapper">
-
-      <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container-fluid">
-          <RouterLink class="navbar-brand" to="/">Navbar</RouterLink>
-          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
-            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-          </button>
-          <div class="collapse navbar-collapse" id="navbarSupportedContent">
-            <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
-
-              <li class="nav-item">
-                <RouterLink class="nav-link active" to="/">Home</RouterLink>
-              </li>
-              <li class="nav-item">
-                <RouterLink class="nav-link" to="/about">About Us</RouterLink>
-              </li>
-              <li class="nav-item">
-                <RouterLink class="nav-link" to="/students">Students</RouterLink>
-              </li>
-              
-            </ul>
-            
-          </div>
-        </div>
-      </nav>
-
-    </div>
-  </header>
-
-  <RouterView />
+    <employee-details v-bind:employees ="employees"
+                      @edit:employee="editEmployee"
+                      @delete:employee="deleteEmployee"
+    />
+  </div>
 </template>
 
-<style scoped></style>
+<script>
+
+import EmployeeForm from './components/EmployeeForm.vue'
+import EmployeeDetails from './components/EmployeeDetails.vue'
+
+
+export default {
+  name: 'app',
+  components: {
+    EmployeeDetails,
+    EmployeeForm,
+  },
+  data() {
+    return {
+      employees: [],
+    }
+  },
+  methods: {
+    async addEmployee(employee) {
+      try {
+        const response = await fetch('https://jsonplaceholder.typicode.com/users', {
+          method: 'POST',
+          body: JSON.stringify(employee),
+          headers: { "Content-type": "application/json; charset=UTF-8" }
+        });
+        const data = await response.json()
+        this.employees = [...this.employees, data]
+      } catch (error) {
+        console.error('Error occured while adding employee: ' +error)
+      }
+    },
+
+    async getEmployees() {
+      try {
+        const response = await fetch(`https://jsonplaceholder.typicode.com/users`)
+        const data = await response.json()
+        this.employees = data
+      } catch (error) {
+        console.error('Error occured while retrieving employees: ' +error);
+      }
+    },
+
+    async editEmployee(id, updatedEmployee) {
+      try {
+        const response = await fetch (`https://jsonplaceholder.typicode.com/users/${id}`, {
+          method: 'PUT',
+          body: JSON.stringify(updatedEmployee),
+          headers: { "Content-type": "application/json; charset=UTF-8" } 
+        });
+
+        const data = await response.json()
+        this.employees = this.employees.map(employee => (employee.id === id ? data : employee))
+
+      } catch (error) {
+        console.error('Error while editing: ', +error)
+      }
+    },
+
+    async deleteEmployee(id) {
+      try {
+        await fetch (`https://jsonplaceholder.typicode.com/users/${id}`, {
+          method: 'DELETE'
+        });
+        this.employees = this.employees.filter(employee => employee.id !== id);
+      } catch (error) {
+        console.error('Error while deleting: ', +error)
+      }
+    },
+  },
+  mounted() {
+    this.getEmployees()
+  }
+  
+}
+</script>
+
+<style>
+
+#employee-details {
+  width: 100%;
+}
+
+image{
+  width: 100%;
+}
+
+button {
+  background: #41b883;
+  border: 1px solid #41b883;
+}
+
+.delete-button {
+  background:#d11a2a;
+  border: 1px solid #d11a2a;
+}
+
+.small-container {
+  max-width: 720px;
+   font-family: 'Avenir', Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-align: left;
+  color: #2c3e50;
+  margin-top: 10px;
+  margin-left: 10px;
+}
+
+</style>
